@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武将均分工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-content {
+            flex: 1;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .back-btn {
+            background-color: #95a5a6;
+            margin-top: 20px;
+        }
+        .back-btn:hover {
+            background-color: #7f8c8d;
+        }
+        .group-btn {
+            background-color: #2ecc71;
+            margin-bottom: 15px;
+        }
+        .group-btn:hover {
+            background-color: #27ae60;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .note {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 5px;
+            line-height: 1.5;
+        }
+        .wiki-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .wiki-link:hover {
+            text-decoration: underline;
+            color: #2980b9;
+        }
+        /* 底部署名样式 */
+        .footer {
+            text-align: center;
+            padding: 30px 0 10px 0;
+            color: #95a5a6;
+            font-size: 14px;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <h1>武将均分工具</h1>
+
+        <!-- 步骤1：设置与导入 -->
+        <div id="setupView" class="container">
+            <div class="form-group">
+                <label for="nInput">请输入每堆分配的武将数 (N)：</label>
+                <input type="number" id="nInput" min="1" value="10" placeholder="默认为 10">
+            </div>
+            <div class="form-group">
+                <label for="xInput">请输入需要分成的堆数 (X)：</label>
+                <input type="number" id="xInput" min="1" value="3" placeholder="默认为 3">
+                <div id="xNote" class="note"></div>
+            </div>
+            <div class="form-group">
+                <label for="csvFile">请上传CSV文件 (可选)：</label>
+                <input type="file" id="csvFile" accept=".csv">
+                <div class="note">格式要求：武将名,分数（无表头）。<br>★ 自动兼容 UTF-8 和 GB2312 编码。<br>★ 若不上传，将自动使用系统默认库（2026年3月18日斗地主8-10分武将汇总）。<br>★ 仅针对移动版武将优化，其他版本暂未适配。</div>
+            </div>
+            <button onclick="generate()">开始随机并均分</button>
+        </div>
+
+        <!-- 步骤2：分组列表查看 -->
+        <div id="groupsView" class="container" style="display: none;">
+            <h2 id="groupTitle">已为您均分为 X 堆</h2>
+            <p style="text-align: center; color: #7f8c8d;">均分算法已将各堆之间分数平均值的差值降至最低。点击下方按钮查看任意一堆详情。</p>
+            <div id="groupsList"></div>
+            <button class="back-btn" onclick="startOver()">返回首页并重新开始</button>
+        </div>
+
+        <!-- 步骤3：单堆详情查看 -->
+        <div id="detailsView" class="container" style="display: none;">
+            <h2 id="detailTitle">武将详情</h2>
+            <div id="detailContent"></div>
+            <button class="back-btn" onclick="goBackToGroups()">返回上一级 (堆列表)</button>
+        </div>
+    </div>
+
+    <!-- 规范署名区域 -->
+    <div class="footer">
+        &copy; Heylyx841
+    </div>
+
+    <script>
+        // 内置默认武将数据 (64名)
+        const defaultCSVData = `蒋济,10\r\n界沮授,10\r\n十常侍,10\r\n势邓艾,10\r\n势辛宪英,10\r\n戏志才,10\r\n杨彪,10\r\n骠张辽,9\r\n曹髦,9\r\n界徐盛,9\r\n留赞,9\r\n谋黄盖,9\r\n谋诸葛亮,9\r\n神郭嘉,9\r\n神赵云,9\r\n势董昭,9\r\n势太史慈,9\r\n势魏延,9\r\n孙寒华,9\r\n友诸葛亮,9\r\n张奋,9\r\n鲍三娘,8\r\n鲍信,8\r\n崔琰,8\r\n傅佥,8\r\n郭女王,8\r\n蒋琬,8\r\n界钟会,8\r\n鞠义,8\r\n刘璋,8\r\n骆统,8\r\n马钧,8\r\n谋曹操,8\r\n谋曹丕,8\r\n谋曹仁,8\r\n谋公孙瓒,8\r\n谋关羽,8\r\n谋黄忠,8\r\n谋刘备,8\r\n谋陆逊,8\r\n谋吕布,8\r\n南华老仙,8\r\n秦宓,8\r\n清河公主,8\r\n神甘宁,8\r\n神姜维,8\r\n神陆逊,8\r\n神司马懿,8\r\n神孙策,8\r\n神太史慈,8\r\n神荀彧,8\r\n势国渊,8\r\n势陆郁生,8\r\n势于吉,8\r\n势钟会,8\r\n文鸯,8\r\n星黄忠,8\r\n星魏延,8\r\n徐荣,8\r\n许攸,8\r\n羊徽瑜,8\r\n友徐庶,8\r\n笮融,8\r\n周处,8`;
+
+        let allGenerals =[];
+        let generatedGroups =[];
+
+        // 统一提取文本解析逻辑
+        function parseCSVText(text) {
+            let lines = text.split(/\r?\n/); 
+            let uniqueGenerals = new Map();
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+                
+                let parts = line.split(',');
+                if (parts.length >= 2) {
+                    let name = parts[0].trim();
+                    let score = parseFloat(parts[1].trim());
+                    
+                    if (name && !isNaN(score)) {
+                        uniqueGenerals.set(name, score);
+                    }
+                }
+            }
+
+            let parsedList =[];
+            uniqueGenerals.forEach((score, name) => {
+                parsedList.push({ name: name, score: score });
+            });
+            return parsedList;
+        }
+
+        // 动态更新最大堆数(X)的提示及约束
+        function updateUIMaxLimits() {
+            let n = parseInt(document.getElementById('nInput').value);
+            if (isNaN(n) || n < 1) {
+                document.getElementById('xNote').innerText = `请输入有效的每堆武将数(N)。`;
+                return;
+            }
+
+            let maxX = Math.floor(allGenerals.length / n);
+            
+            document.getElementById('xInput').max = maxX;
+            document.getElementById('xNote').innerText = `注意：每堆将分配 ${n} 名武将。当前库共 ${allGenerals.length} 名武将，最多可分 ${maxX} 堆。`;
+        }
+
+        // 监听每堆人数输入框的变化，实时联动更新 X
+        document.getElementById('nInput').addEventListener('input', updateUIMaxLimits);
+
+        // 初始化加载默认库
+        window.onload = function() {
+            allGenerals = parseCSVText(defaultCSVData);
+            updateUIMaxLimits();
+        };
+
+        // 监听文件上传，自动识别 UTF-8 与 GB2312/GBK
+        document.getElementById('csvFile').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (!file) {
+                // 如果用户取消文件选择，回退到默认库
+                allGenerals = parseCSVText(defaultCSVData); 
+                updateUIMaxLimits();
+                return; 
+            }
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let buffer = e.target.result;
+                let text = "";
+                
+                try {
+                    let decoder = new TextDecoder('utf-8', {fatal: true});
+                    text = decoder.decode(buffer);
+                } catch (err) {
+                    let decoder = new TextDecoder('gbk');
+                    text = decoder.decode(buffer);
+                }
+
+                allGenerals = parseCSVText(text);
+                updateUIMaxLimits();
+                alert(`成功导入 ${allGenerals.length} 名武将！当前最多可分 ${document.getElementById('xInput').max} 堆。`);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // 生成分组逻辑
+        function generate() {
+            let n = parseInt(document.getElementById('nInput').value);
+            let x = parseInt(document.getElementById('xInput').value);
+            
+            if (isNaN(n) || n < 1) {
+                alert("错误：每堆武将数 (N) 请输入正整数！");
+                return;
+            }
+
+            let maxNum = Math.floor(allGenerals.length / n);
+
+            if (isNaN(x) || x < 1 || x > maxNum) {
+                alert(`错误：堆数 (X) 请输入 1 到 ${maxNum} 之间的正整数！（当前库总武将数：${allGenerals.length}）`);
+                return;
+            }
+
+            let requiredCount = n * x;
+
+            // 1. 随机打乱全部武将 (Fisher-Yates)
+            let shuffled = [...allGenerals];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            // 2. 截取前 N*X 个武将
+            let selectedGenerals = shuffled.slice(0, requiredCount);
+
+            // 3. 算法均分武将
+            generatedGroups = partitionGenerals(selectedGenerals, x, n);
+
+            // 4. 切换视图
+            document.getElementById('setupView').style.display = 'none';
+            document.getElementById('groupsView').style.display = 'block';
+            document.getElementById('groupTitle').innerText = `已成功均分为 ${x} 堆`;
+
+            // 渲染按钮组
+            let groupsListHtml = '';
+            for (let i = 0; i < generatedGroups.length; i++) {
+                let sum = generatedGroups[i].reduce((total, g) => total + g.score, 0);
+                let avg = sum / n;
+                groupsListHtml += `<button class="group-btn" onclick="showGroupDetail(${i})">
+                    查看 第 ${i + 1} 堆 (总分: ${sum.toFixed(2)} | 平均分: ${avg.toFixed(2)})
+                </button>`;
+            }
+            document.getElementById('groupsList').innerHTML = groupsListHtml;
+        }
+
+        // 核心均分算法：蛇形分配 + 局部搜索优化
+        function partitionGenerals(generals, X, N) {
+            generals.sort((a, b) => b.score - a.score);
+            
+            let groups = Array.from({ length: X }, () =>[]);
+            let sums = new Array(X).fill(0);
+
+            for (let i = 0; i < generals.length; i++) {
+                let round = Math.floor(i / X);
+                let groupIdx = (round % 2 === 0) ? (i % X) : (X - 1 - (i % X));
+                groups[groupIdx].push(generals[i]);
+                sums[groupIdx] += generals[i].score;
+            }
+
+            let getDiff = () => Math.max(...sums) - Math.min(...sums);
+            let currentDiff = getDiff();
+
+            for (let iter = 0; iter < 50000; iter++) {
+                if (currentDiff === 0) break; 
+
+                let g1 = Math.floor(Math.random() * X);
+                let g2 = Math.floor(Math.random() * X);
+                if (g1 === g2) continue;
+
+                let i1 = Math.floor(Math.random() * N);
+                let i2 = Math.floor(Math.random() * N);
+
+                let val1 = groups[g1][i1].score;
+                let val2 = groups[g2][i2].score;
+
+                sums[g1] = sums[g1] - val1 + val2;
+                sums[g2] = sums[g2] - val2 + val1;
+
+                let newDiff = getDiff();
+
+                if (newDiff < currentDiff) {
+                    let temp = groups[g1][i1];
+                    groups[g1][i1] = groups[g2][i2];
+                    groups[g2][i2] = temp;
+                    currentDiff = newDiff;
+                } else {
+                    sums[g1] = sums[g1] - val2 + val1;
+                    sums[g2] = sums[g2] - val1 + val2;
+                }
+            }
+
+            return groups;
+        }
+
+        // 显示单堆的详情（增加Bwiki外部链接）
+        function showGroupDetail(index) {
+            document.getElementById('groupsView').style.display = 'none';
+            document.getElementById('detailsView').style.display = 'block';
+
+            let group = generatedGroups[index];
+            let sum = group.reduce((total, g) => total + g.score, 0);
+            let avg = sum / group.length;
+
+            document.getElementById('detailTitle').innerText = `第 ${index + 1} 堆 武将名单`;
+
+            let tableHtml = `<table>
+                <tr>
+                    <th style="width: 15%;">序号</th>
+                    <th style="width: 35%;">武将名</th>
+                    <th style="width: 25%;">武将分数</th>
+                    <th style="width: 25%;">操作</th>
+                </tr>`;
+            
+            group.forEach((g, idx) => {
+                let wikiUrl = `https://wiki.biligame.com/msgs/${encodeURIComponent(g.name)}`;
+                
+                tableHtml += `<tr>
+                    <td>${idx + 1}</td>
+                    <td>${g.name}</td>
+                    <td>${g.score}</td>
+                    <td><a href="${wikiUrl}" target="_blank" class="wiki-link">查看WIKI</a></td>
+                </tr>`;
+            });
+
+            tableHtml += `<tr>
+                <td colspan="3" style="text-align:right; font-weight:bold; background-color: #f9f9f9;">总计 / 平均分：</td>
+                <td style="font-weight:bold; background-color: #f9f9f9;">${sum.toFixed(2)} / ${avg.toFixed(2)}</td>
+            </tr></table>`;
+
+            document.getElementById('detailContent').innerHTML = tableHtml;
+        }
+
+        // 从详情返回列表
+        function goBackToGroups() {
+            document.getElementById('detailsView').style.display = 'none';
+            document.getElementById('groupsView').style.display = 'block';
+        }
+
+        // 重置/重新开始（不清除用户的 N 和 X）
+        function startOver() {
+            document.getElementById('groupsView').style.display = 'none';
+            document.getElementById('detailsView').style.display = 'none';
+            document.getElementById('setupView').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
