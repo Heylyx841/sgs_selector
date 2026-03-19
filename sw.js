@@ -1,6 +1,6 @@
 const CACHE_NAME = 'msgs-tool-v1';
 // 需要缓存的资源列表
-const ASSETS_TO_CACHE = [
+const ASSETS_TO_CACHE =[
   './',
   './index.html',
   './manifest.json',
@@ -13,7 +13,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ASSETS_TO_CACHE))
-      .then(self.skipWaiting())
+      .then(() => self.skipWaiting()) // 【已修复】修改为回调函数
   );
 });
 
@@ -28,7 +28,7 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // 【优化】立即接管当前客户端
   );
 });
 

@@ -4,8 +4,6 @@
   "description": "三国杀武将均分与选将工具",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ede6d6",
-  "theme_color": "#b5944b",
   "icons": [
     {
       "src": "logo-1024.png",
