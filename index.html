@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
     <title>武将均分与选将工具</title>
     <style>
         body {
@@ -332,7 +333,7 @@
             let shuffled = [...allGenerals];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 let j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] =[shuffled[j], shuffled[i]];
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
             let selectedGeneralsList = shuffled.slice(0, requiredCount);
 
@@ -367,11 +368,11 @@
             if (X > 1) {
                 let getDiff = () => Math.max(...sums) - Math.min(...sums);
                 let currentDiff = getDiff();
-                let noImprovementCount = 0; // 记录连续未优化次数用于早停机制
+                let noImprovementCount = 0; 
 
                 for (let iter = 0; iter < 50000; iter++) {
-                    // 如果差值为 0 (绝对平均)，或连续 5000 次尝试均未改善 (陷入最优)，直接终结循环节约算力
-                    if (currentDiff === 0 || noImprovementCount > 5000) break; 
+                    // 【发版优化级】：解决浮点精度误差导致无法早停的隐患 (误差小于百万分之一即视为0)
+                    if (currentDiff < 1e-6 || noImprovementCount > 5000) break; 
 
                     let g1 = Math.floor(Math.random() * X);
                     let g2 = Math.floor(Math.random() * X);
@@ -409,9 +410,8 @@
                 }
             }
 
-            // 【极致修复点：防规律偏移的二次洗牌】
+            // 二次洗牌：防规律偏移
             // 蛇形分配会导致高分武将集中在前几个堆，这里将各个堆整体作为元素进行顺序打乱
-            // 这确保了极品武将落在“第1堆”还是“第X堆”的概率是绝对公平且不可预测的！
             for (let i = groups.length - 1; i > 0; i--) {
                 let j = Math.floor(Math.random() * (i + 1));
                 [groups[i], groups[j]] = [groups[j], groups[i]];
@@ -506,9 +506,10 @@
                 </tr>`;
             });
 
+            // 消除中间的割裂竖线
             tableHtml += `<tr>
-                <td colspan="2" style="text-align:right; font-weight:bold; background-color: #f9f9f9;">本堆 总分 / 平均分：</td>
-                <td colspan="2" style="font-weight:bold; background-color: #f9f9f9;">${sum.toFixed(2)} / ${avg.toFixed(2)}</td>
+                <td colspan="2" style="text-align:right; font-weight:bold; background-color: #f9f9f9; border-right: none;">本堆 总分 / 平均分：</td>
+                <td colspan="2" style="font-weight:bold; background-color: #f9f9f9; border-left: none;">${sum.toFixed(2)} / ${avg.toFixed(2)}</td>
             </tr></table></div>`;
 
             document.getElementById('detailContent').innerHTML = tableHtml;
