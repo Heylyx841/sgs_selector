@@ -1,0 +1,23 @@
+{
+  "name": "武将均分工具",
+  "short_name": "武将均分",
+  "description": "三国杀武将均分与选将工具",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ede6d6",
+  "theme_color": "#b5944b",
+  "icons": [
+    {
+      "src": "logo-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

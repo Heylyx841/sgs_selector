@@ -2,9 +2,43 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <!-- 1. 移动端极致适配：禁止缩放、禁止识别电话（防止评分被误认为电话号码） -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="format-detection" content="telephone=no">
+    
     <title>武将均分与选将工具</title>
+    
+    <!-- 2. SEO 与项目描述 -->
+    <meta name="description" content="三国杀武将均分与选将工具">
+    <meta name="author" content="Heylyx841">
+
+    <!-- 3. PWA (渐进式 Web 应用) 配置 -->
+    <link rel="manifest" href="manifest.json">
+    <!-- 系统任务栏颜色（金棕色边框色） -->
+    <meta name="theme-color" content="#b5944b">
+
+    <!-- 4. iOS (iPhone/iPad) 专用优化 -->
+    <!-- 开启全屏模式（隐藏 Safari 底部工具栏） -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- 设置状态栏颜色（与主题色一致） -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="#b5944b">
+    <!-- 桌面图标标签 (直接使用最高清的 1024px 图标) -->
+    <link rel="apple-touch-icon" href="logo-1024.png">
+    <!-- 桌面应用标题（安装后的图标下方的名字） -->
+    <meta name="apple-mobile-web-app-title" content="武将均分">
+
+    <!-- 5. 注册 Service Worker (实现安装提示功能) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('Service Worker 注册成功:', reg);
+                }).catch(err => {
+                    console.log('Service Worker 注册失败:', err);
+                });
+            });
+        }
+    </script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
