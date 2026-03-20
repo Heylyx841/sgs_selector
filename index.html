@@ -367,7 +367,7 @@
             let requiredCount = n * x;
 
             // 第一阶段洗牌：真随机打乱并截取前 N*X 个武将
-            let shuffled =[...allGenerals];
+            let shuffled = [...allGenerals];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 let j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
