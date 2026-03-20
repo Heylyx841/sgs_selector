@@ -191,7 +191,14 @@
                     ★ 仅针对移动版武将优化，其他版本暂未适配。
                 </div>
             </div>
-            <button onclick="generate()">开始随机并均分</button>
+            <button onclick="generate()">开始随机均分</button>
+            
+            <!-- ====== 这里是新增的预设将包文字 ====== -->
+            <div class="note" style="text-align: center; margin-top: 15px; font-size: 14px;">
+                预设将包：<a href="https://wwbkr.lanzoul.com/b0w9mokzi" target="_blank" class="wiki-link">https://wwbkr.lanzoul.com/b0w9mokzi</a> 密码:66ti
+            </div>
+            <!-- ======================================= -->
+            
         </div>
 
         <!-- 步骤2：分组列表及选将进度查看 -->
@@ -360,7 +367,7 @@
             let requiredCount = n * x;
 
             // 第一阶段洗牌：真随机打乱并截取前 N*X 个武将
-            let shuffled = [...allGenerals];
+            let shuffled =[...allGenerals];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 let j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
